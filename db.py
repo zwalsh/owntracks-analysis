@@ -116,3 +116,28 @@ class LocationDB:
                 ],
             )
             conn.commit()
+
+    def get_location_at(
+        self, person: str, timestamp: int, device: Optional[str] = None
+    ) -> Optional[Location]:
+        """
+        Returns the location for a person (and optionally device) at a given timestamp.
+        """
+        with self._connect() as conn:
+            cur = conn.cursor()
+            query = """
+                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json
+                FROM locations
+                WHERE person = ? AND timestamp_from <= ? AND timestamp_to > ?
+            """
+            params = [person, timestamp, timestamp]
+            if device:
+                query += " AND device = ?"
+                params.append(device)
+            query += " ORDER BY timestamp_from DESC LIMIT 1"
+            cur.execute(query, params)
+            row = cur.fetchone()
+            if row:
+                columns = [desc[0] for desc in cur.description]
+                return Location(**dict(zip(columns, row)))
+            return None
