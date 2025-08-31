@@ -141,3 +141,23 @@ class LocationDB:
                 columns = [desc[0] for desc in cur.description]
                 return Location(**dict(zip(columns, row)))
             return None
+
+    def get_locations_in_range(
+        self, person: str, from_ts: int, to_ts: int
+    ) -> List[Location]:
+        """
+        Returns all location intervals for a person overlapping [from_ts, to_ts).
+        """
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json
+                FROM locations
+                WHERE person = ? AND timestamp_to > ? AND timestamp_from < ?
+                ORDER BY timestamp_from
+                """,
+                (person, from_ts, to_ts),
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [Location(**dict(zip(columns, row))) for row in cur.fetchall()]
