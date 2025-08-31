@@ -8,7 +8,8 @@ DB_PATH = "locations.db"
 class Location(TypedDict):
     person: str
     device: str
-    timestamp: int
+    timestamp_from: int
+    timestamp_to: int
     lat: float
     lon: float
     accuracy: Optional[float]
@@ -34,7 +35,8 @@ class LocationDB:
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     person TEXT,
                     device TEXT,
-                    timestamp INTEGER,
+                    timestamp_from INTEGER,
+                    timestamp_to INTEGER,
                     lat REAL,
                     lon REAL,
                     accuracy REAL,
@@ -95,14 +97,15 @@ class LocationDB:
             cur = conn.cursor()
             cur.executemany(
                 """
-                INSERT INTO locations (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
                         loc["person"],
                         loc["device"],
-                        loc["timestamp"],
+                        loc["timestamp_from"],
+                        loc["timestamp_to"],
                         loc["lat"],
                         loc["lon"],
                         loc["accuracy"],

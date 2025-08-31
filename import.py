@@ -32,7 +32,16 @@ for file_path in json_files:
             for device, entries in devices.items():
                 if not isinstance(entries, list):
                     continue
-                for entry in entries:
+
+                # Sort entries by timestamp
+                entries_sorted = sorted(entries, key=lambda e: e.get("tst", 0))
+                for i, entry in enumerate(entries_sorted):
+                    timestamp_from = entry.get("tst")
+                    if i + 1 < len(entries_sorted):
+                        timestamp_to = entries_sorted[i + 1].get("tst")
+                    else:
+                        timestamp_to = 2147483647
+
                     timestamp = entry.get("tst")
                     lat = entry.get("lat")
                     lon = entry.get("lon")
@@ -43,7 +52,8 @@ for file_path in json_files:
                         Location(
                             person=person,
                             device=device,
-                            timestamp=timestamp,
+                            timestamp_from=timestamp,
+                            timestamp_to=timestamp_to,
                             lat=lat,
                             lon=lon,
                             accuracy=accuracy,
@@ -51,6 +61,7 @@ for file_path in json_files:
                             raw_json=raw_json,
                         )
                     )
+
 
 # Bulk insert all locations at once
 if bulk_locations:
