@@ -1,3 +1,4 @@
+from time import localtime, mktime, strptime
 from geocode import Geocoder
 from typing import List, Tuple, Dict
 from db import LocationDB
@@ -17,8 +18,14 @@ ROUND_DIGITS = 2
 DB = LocationDB()
 
 
-def cluster_locations_by_time(person: str) -> List[Tuple[Point, float]]:
-    locations = DB.get_locations(person=person)
+def cluster_locations_by_time(person: str, year: str) -> List[Tuple[Point, float]]:
+    year_start_ts = int(mktime(strptime(f"{year}-01-01", "%Y-%m-%d")))
+    year_end_ts = int(mktime(strptime(f"{year}-12-31", "%Y-%m-%d")))
+    locations = DB.get_locations_in_range(
+        person=person,
+        from_ts=year_start_ts,
+        to_ts=year_end_ts,
+    )
     clusters: Dict[Tuple[float, float], float] = {}
     for loc in locations:
         # Round lat/lon to desired granularity
@@ -47,16 +54,18 @@ import sys
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         person = sys.argv[1]
+        year = sys.argv[2] if len(sys.argv) > 2 else str(localtime().tm_year)
     else:
-        print("Usage: uv run places.py <person>")
+        print("Usage: uv run places.py <person> <year=current year>")
         sys.exit(1)
-    places = cluster_locations_by_time(person)
+    places = cluster_locations_by_time(person, year)
 
-    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Time Spent (hours)':>18}")
-    print("-" * 86)
+    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}")
+    print("-" * 102)
     for point, hours in filter(lambda x: x[1] > 24, places):
         place_info = geocoder.get_place_info(point.lat, point.lon)
-        name = (place_info.name or "")[:30] 
+        name = (place_info.name or "")[:30]
         city = (getattr(place_info, "city", "") or "")[:20]
         state = (getattr(place_info, "state", "") or "")[:15]
-        print(f"{name:<30} {city:<20} {state:<15} {hours:>18.2f}")
+        country = (getattr(place_info, "country", "") or "")[:15]
+        print(f"{name:<30} {city:<20} {state:<15} {country:<15} {hours:>18.2f}")
