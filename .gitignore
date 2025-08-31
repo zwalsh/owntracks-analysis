@@ -211,3 +211,4 @@ __marimo__/
 
 owntracks-json/**/*.json
 locations.db
+geocode_cache.json

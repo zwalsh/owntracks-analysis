@@ -1,4 +1,4 @@
-import requests
+from geocode import Geocoder
 from typing import List, Tuple, Dict
 from db import LocationDB
 
@@ -37,30 +37,14 @@ def cluster_locations_by_time(person: str) -> List[Tuple[Point, float]]:
 import requests
 import time
 
-def reverse_geocode(lat, lon):
-    url = f"https://nominatim.openstreetmap.org/reverse"
-    params = {
-        "lat": lat,
-        "lon": lon,
-        "format": "jsonv2",
-        "zoom": 14,
-        "addressdetails": 1
-    }
-    headers = {"User-Agent": "owntracks-analysis-script"}
-    try:
-        resp = requests.get(url, params=params, headers=headers)
-        if resp.status_code == 200:
-            data = resp.json()
-            return data.get("display_name", "Unknown")
-    except Exception as e:
-        print(f"Error geocoding {lat},{lon}: {e}")
-    return "Unknown"
+geocoder = Geocoder()
 
 # Example usage:
 if __name__ == "__main__":
 	person = "zach"
 	places = cluster_locations_by_time(person)
+	print("Place Name\tTime Spent (hours)")
 	for point, hours in places[:10]:
-		name = reverse_geocode(point.lat, point.lon)
-		print(f"{name:<30} ({point}): {hours:.2f} hours")
+		name = geocoder.reverse_geocode_name(point.lat, point.lon)
+		print(f"{name:<30}\t{hours:.2f}")
 
