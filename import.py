@@ -1,7 +1,7 @@
 import os
 import glob
 import json
-from db import LocationDB, DB_PATH
+from db import LocationDB, DB_PATH, Location
 
 JSON_DIR = "owntracks-json"
 
@@ -39,7 +39,18 @@ for file_path in json_files:
                     accuracy = entry.get("acc")
                     battery = entry.get("batt")
                     raw_json = json.dumps(entry)
-                    bulk_locations.append((person, device, timestamp, lat, lon, accuracy, battery, raw_json))
+                    bulk_locations.append(
+                        Location(
+                            person=person,
+                            device=device,
+                            timestamp=timestamp,
+                            lat=lat,
+                            lon=lon,
+                            accuracy=accuracy,
+                            battery=battery,
+                            raw_json=raw_json,
+                        )
+                    )
 
 # Bulk insert all locations at once
 if bulk_locations:

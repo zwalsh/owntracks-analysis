@@ -1,7 +1,20 @@
 import sqlite3
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TypedDict
+
 
 DB_PATH = "locations.db"
+
+
+class Location(TypedDict):
+    person: str
+    device: str
+    timestamp: int
+    lat: float
+    lon: float
+    accuracy: Optional[float]
+    battery: Optional[float]
+    raw_json: str
+
 
 class LocationDB:
     def __init__(self, db_path: str = DB_PATH):
@@ -9,7 +22,7 @@ class LocationDB:
 
     def _connect(self):
         return sqlite3.connect(self.db_path)
-    
+
     def create_schema(self):
         """
         Create the locations table schema in the database.
@@ -31,17 +44,31 @@ class LocationDB:
             """)
             conn.commit()
 
-    def insert_location(self, person: str, device: str, timestamp: int, lat: float, lon: float,
-                        accuracy: Optional[float], battery: Optional[float], raw_json: str):
+    def insert_location(
+        self,
+        person: str,
+        device: str,
+        timestamp: int,
+        lat: float,
+        lon: float,
+        accuracy: Optional[float],
+        battery: Optional[float],
+        raw_json: str,
+    ):
         with self._connect() as conn:
             cur = conn.cursor()
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO locations (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (person, device, timestamp, lat, lon, accuracy, battery, raw_json))
+            """,
+                (person, device, timestamp, lat, lon, accuracy, battery, raw_json),
+            )
             conn.commit()
 
-    def get_locations(self, person: Optional[str] = None, device: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_locations(
+        self, person: Optional[str] = None, device: Optional[str] = None
+    ) -> List[Location]:
         with self._connect() as conn:
             cur = conn.cursor()
             query = "SELECT person, device, timestamp, lat, lon, accuracy, battery, raw_json FROM locations"
@@ -57,12 +84,12 @@ class LocationDB:
                 query += " WHERE " + " AND ".join(conditions)
             cur.execute(query, params)
             columns = [desc[0] for desc in cur.description]
-            return [dict(zip(columns, row)) for row in cur.fetchall()]
+            return [Location(**dict(zip(columns, row))) for row in cur.fetchall()]
 
-    def insert_locations_bulk(self, locations: list):
+    def insert_locations_bulk(self, locations: List[Location]):
         """
         Bulk insert locations.
-        locations: list of tuples (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
+        locations: list of Location dicts
         """
         with self._connect() as conn:
             cur = conn.cursor()
@@ -71,6 +98,18 @@ class LocationDB:
                 INSERT INTO locations (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                locations
+                [
+                    (
+                        loc["person"],
+                        loc["device"],
+                        loc["timestamp"],
+                        loc["lat"],
+                        loc["lon"],
+                        loc["accuracy"],
+                        loc["battery"],
+                        loc["raw_json"],
+                    )
+                    for loc in locations
+                ],
             )
             conn.commit()
