@@ -4,7 +4,6 @@ import requests
 import json
 import os
 import time
-from typing import Tuple
 
 CACHE_FILE = "geocode_cache.json"
 USER_AGENT = "owntracks-analysis-script"

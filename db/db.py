@@ -1,9 +1,7 @@
 import sqlite3
-from typing import List, Dict, Any, Optional, TypedDict
-
+from typing import List, Optional, TypedDict
 
 DB_PATH = "locations.db"
-
 
 class Location(TypedDict):
     person: str

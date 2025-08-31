@@ -1,7 +1,7 @@
 from time import localtime, mktime, strptime
-from geocode import Geocoder
+from geocode.geocode import Geocoder
 from typing import List, Tuple, Dict
-from db import LocationDB
+from db.db import LocationDB
 
 
 class Point:
@@ -47,6 +47,20 @@ def cluster_locations_by_time(person: str, year: str) -> List[Tuple[Point, float
 
 
 geocoder = Geocoder()
+
+
+def print_top_locations(person, year=str(localtime().tm_year)):
+    places = cluster_locations_by_time(person, year)
+    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}")
+    print("-" * 102)
+    for point, hours in filter(lambda x: x[1] > 24, places):
+        place_info = geocoder.get_place_info(point.lat, point.lon)
+        name = (place_info.name or "")[:30]
+        city = (getattr(place_info, "city", "") or "")[:20]
+        state = (getattr(place_info, "state", "") or "")[:15]
+        country = (getattr(place_info, "country", "") or "")[:15]
+        print(f"{name:<30} {city:<20} {state:<15} {country:<15} {hours:>18.2f}")
+
 
 # Example usage:
 import sys

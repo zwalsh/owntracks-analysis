@@ -1,6 +1,6 @@
 import math
 import logging
-from db import LocationDB
+from db.db import LocationDB
 from datetime import datetime, timedelta
 
 PERSON_A = "jackie"
@@ -83,11 +83,3 @@ def percent_minutes_spent_together():
         logging.info(
             f"{day}: together {together_count:4}/{total_count} minutes ({pct:.2f}%) [{bar_str}]"
         )
-
-
-def main():
-    percent_minutes_spent_together()
-
-
-if __name__ == "__main__":
-    main()
