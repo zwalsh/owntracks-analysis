@@ -7,12 +7,33 @@ class LocationDB:
     def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
 
-    def connect(self):
+    def _connect(self):
         return sqlite3.connect(self.db_path)
+    
+    def create_schema(self):
+        """
+        Create the locations table schema in the database.
+        """
+        with self._connect() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE locations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    person TEXT,
+                    device TEXT,
+                    timestamp INTEGER,
+                    lat REAL,
+                    lon REAL,
+                    accuracy REAL,
+                    battery REAL,
+                    raw_json TEXT
+                )
+            """)
+            conn.commit()
 
     def insert_location(self, person: str, device: str, timestamp: int, lat: float, lon: float,
                         accuracy: Optional[float], battery: Optional[float], raw_json: str):
-        with self.connect() as conn:
+        with self._connect() as conn:
             cur = conn.cursor()
             cur.execute("""
                 INSERT INTO locations (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
@@ -21,7 +42,7 @@ class LocationDB:
             conn.commit()
 
     def get_locations(self, person: Optional[str] = None, device: Optional[str] = None) -> List[Dict[str, Any]]:
-        with self.connect() as conn:
+        with self._connect() as conn:
             cur = conn.cursor()
             query = "SELECT person, device, timestamp, lat, lon, accuracy, battery, raw_json FROM locations"
             params = []
@@ -43,7 +64,7 @@ class LocationDB:
         Bulk insert locations.
         locations: list of tuples (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
         """
-        with self.connect() as conn:
+        with self._connect() as conn:
             cur = conn.cursor()
             cur.executemany(
                 """

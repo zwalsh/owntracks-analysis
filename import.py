@@ -9,24 +9,10 @@ JSON_DIR = "owntracks-json"
 if os.path.exists(DB_PATH):
     os.remove(DB_PATH)
 
+
 # Recreate the database schema
 db = LocationDB()
-with db.connect() as conn:
-    cur = conn.cursor()
-    cur.execute("""
-    CREATE TABLE locations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        person TEXT,
-        device TEXT,
-        timestamp INTEGER,
-        lat REAL,
-        lon REAL,
-        accuracy REAL,
-        battery REAL,
-        raw_json TEXT
-    )
-    """)
-    conn.commit()
+db.create_schema()
 
 json_files = glob.glob(os.path.join(JSON_DIR, "**", "*.json"), recursive=True)
 
