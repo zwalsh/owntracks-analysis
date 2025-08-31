@@ -61,8 +61,8 @@ class LocationDB:
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO locations (person, device, timestamp, lat, lon, accuracy, battery, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (person, device, timestamp, lat, lon, accuracy, battery, raw_json),
             )
@@ -73,7 +73,7 @@ class LocationDB:
     ) -> List[Location]:
         with self._connect() as conn:
             cur = conn.cursor()
-            query = "SELECT person, device, timestamp, lat, lon, accuracy, battery, raw_json FROM locations"
+            query = "SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json FROM locations"
             params = []
             conditions = []
             if person:
