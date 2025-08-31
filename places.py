@@ -42,15 +42,21 @@ def cluster_locations_by_time(person: str) -> List[Tuple[Point, float]]:
 geocoder = Geocoder()
 
 # Example usage:
+import sys
+
 if __name__ == "__main__":
-    person = "jackie"
+    if len(sys.argv) > 1:
+        person = sys.argv[1]
+    else:
+        print("Usage: uv run places.py <person>")
+        sys.exit(1)
     places = cluster_locations_by_time(person)
 
-    print(f"{'Place Name':<30} {'City':<20} {'State':<10} {'Time Spent (hours)':>18}")
-    print("-" * 80)
+    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Time Spent (hours)':>18}")
+    print("-" * 86)
     for point, hours in filter(lambda x: x[1] > 24, places):
         place_info = geocoder.get_place_info(point.lat, point.lon)
-        name = (place_info.name or "")[:30]
+        name = (place_info.name or "")[:30] 
         city = (getattr(place_info, "city", "") or "")[:20]
         state = (getattr(place_info, "state", "") or "")[:15]
         print(f"{name:<30} {city:<20} {state:<15} {hours:>18.2f}")
