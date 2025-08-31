@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import requests
 import json
 import os
@@ -6,6 +8,15 @@ from typing import Tuple
 
 CACHE_FILE = "geocode_cache.json"
 USER_AGENT = "owntracks-analysis-script"
+
+
+class PlaceInfo(NamedTuple):
+    name: str
+    display_name: str
+    city: str
+    state: str
+    country: str
+
 
 class Geocoder:
     def __init__(self, cache_file: str = CACHE_FILE):
@@ -22,17 +33,17 @@ class Geocoder:
         with open(self.cache_file, "w") as f:
             json.dump(self.cache, f)
 
-    def reverse_geocode_name(self, lat: float, lon: float) -> str:
+    def reverse_geocode(self, lat: float, lon: float) -> dict:
         key = f"{lat:.5f},{lon:.5f}"
         if key in self.cache:
-            return self.cache[key]["display_name"]
+            return self.cache[key]
         url = "https://nominatim.openstreetmap.org/reverse"
         params = {
             "lat": lat,
             "lon": lon,
             "format": "jsonv2",
             "zoom": 14,
-            "addressdetails": 1
+            "addressdetails": 1,
         }
         headers = {"User-Agent": USER_AGENT}
         try:
@@ -42,9 +53,31 @@ class Geocoder:
                 self.cache[key] = data
                 self._save_cache()
                 time.sleep(1)  # Be polite to the API
-                return data["display_name"]
+                return data
         except Exception as e:
             print(f"Error geocoding {lat},{lon}: {e}")
         self.cache[key] = {"display_name": "Unknown"}
         self._save_cache()
         return {"display_name": "Unknown"}
+
+    def get_place_info(self, lat: float, lon: float) -> "PlaceInfo":
+        resp = self.reverse_geocode(lat, lon)
+        address = resp.get("address", {})
+        city = (
+            address.get("city")
+            or address.get("town")
+            or address.get("village")
+            or address.get("hamlet")
+            or address.get("suburb")
+            or address.get("quarter")
+            or address.get("neighbourhood")
+            or address.get("county")
+            or "Unknown"
+        )
+        return PlaceInfo(
+            name=resp.get("name", "Unknown"),
+            display_name=resp.get("display_name", "Unknown"),
+            city=city,
+            state=address.get("state", "Unknown"),
+            country=address.get("country", "Unknown"),
+        )
