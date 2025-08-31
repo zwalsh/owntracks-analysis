@@ -83,3 +83,6 @@ def percent_minutes_spent_together():
         logging.info(
             f"{day}: together {together_count:4}/{total_count} minutes ({pct:.2f}%) [{bar_str}]"
         )
+
+if __name__=="__main__":
+    percent_minutes_spent_together()

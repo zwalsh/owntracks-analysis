@@ -3,6 +3,7 @@ from typing import List, Optional, TypedDict
 
 DB_PATH = "locations.db"
 
+
 class Location(TypedDict):
     person: str
     device: str

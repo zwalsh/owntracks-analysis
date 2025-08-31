@@ -5,11 +5,11 @@ from db.db import LocationDB, DB_PATH, Location
 
 JSON_DIR = "owntracks-json"
 
+
 def run_import():
     # Remove existing database if present
     if os.path.exists(DB_PATH):
         os.remove(DB_PATH)
-
 
     # Recreate the database schema
     db = LocationDB()
@@ -37,11 +37,10 @@ def run_import():
                     # Sort entries by timestamp
                     entries_sorted = sorted(entries, key=lambda e: e.get("tst", 0))
                     for i, entry in enumerate(entries_sorted):
-                        timestamp_from = entry.get("tst")
                         if i + 1 < len(entries_sorted):
                             timestamp_to = entries_sorted[i + 1].get("tst")
                         else:
-                            timestamp_to = 2147483647
+                            continue # Just discard the last entry in each file, it's for the best - no other easy way to know what the timestamp_to time is.
 
                         timestamp = entry.get("tst")
                         lat = entry.get("lat")
@@ -63,10 +62,10 @@ def run_import():
                             )
                         )
 
-
     # Bulk insert all locations at once
     if bulk_locations:
         db.insert_locations_bulk(bulk_locations)
+
 
 if __name__ == "__main__":
     run_import()

@@ -2,6 +2,7 @@ from time import localtime, mktime, strptime
 from geocode.geocode import Geocoder
 from typing import List, Tuple, Dict
 from db.db import LocationDB
+import sys
 
 
 class Point:
@@ -16,6 +17,7 @@ class Point:
 # Granularity: ~0.001 deg lat/lon ≈ 100m, good for distinguishing places ~1 mile apart
 ROUND_DIGITS = 2
 DB = LocationDB()
+GEOCODER = Geocoder()
 
 
 def cluster_locations_by_time(person: str, year: str) -> List[Tuple[Point, float]]:
@@ -46,24 +48,20 @@ def cluster_locations_by_time(person: str, year: str) -> List[Tuple[Point, float
     return result
 
 
-geocoder = Geocoder()
-
-
-def print_top_locations(person, year=str(localtime().tm_year)):
+def print_top_locations(person, year):
     places = cluster_locations_by_time(person, year)
-    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}")
+    print(
+        f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}"
+    )
     print("-" * 102)
     for point, hours in filter(lambda x: x[1] > 24, places):
-        place_info = geocoder.get_place_info(point.lat, point.lon)
+        place_info = GEOCODER.get_place_info(point.lat, point.lon)
         name = (place_info.name or "")[:30]
         city = (getattr(place_info, "city", "") or "")[:20]
         state = (getattr(place_info, "state", "") or "")[:15]
         country = (getattr(place_info, "country", "") or "")[:15]
         print(f"{name:<30} {city:<20} {state:<15} {country:<15} {hours:>18.2f}")
 
-
-# Example usage:
-import sys
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -72,14 +70,4 @@ if __name__ == "__main__":
     else:
         print("Usage: uv run places.py <person> <year=current year>")
         sys.exit(1)
-    places = cluster_locations_by_time(person, year)
-
-    print(f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}")
-    print("-" * 102)
-    for point, hours in filter(lambda x: x[1] > 24, places):
-        place_info = geocoder.get_place_info(point.lat, point.lon)
-        name = (place_info.name or "")[:30]
-        city = (getattr(place_info, "city", "") or "")[:20]
-        state = (getattr(place_info, "state", "") or "")[:15]
-        country = (getattr(place_info, "country", "") or "")[:15]
-        print(f"{name:<30} {city:<20} {state:<15} {country:<15} {hours:>18.2f}")
+    print_top_locations(person, year)
