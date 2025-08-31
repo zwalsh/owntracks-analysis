@@ -210,3 +210,4 @@ __marimo__/
 ## CUSTOM ADDITIONS
 
 owntracks-json/**/*.json
+locations.db
