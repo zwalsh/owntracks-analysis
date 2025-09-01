@@ -32,7 +32,12 @@ class Geocoder:
         with open(self.cache_file, "w") as f:
             json.dump(self.cache, f)
 
-    def reverse_geocode(self, lat: float, lon: float) -> dict:
+    def reverse_geocode(self, lat: float, lon: float, round_digits = 2) -> dict:
+        # Approximate to avoid too many overly-precise requests.
+        # 2 digits rounds to the nearest ~1.1km
+        lat = round(lat, round_digits)
+        lon = round(lon, round_digits)
+
         key = f"{lat:.5f},{lon:.5f}"
         if key in self.cache:
             return self.cache[key]
@@ -46,6 +51,7 @@ class Geocoder:
         }
         headers = {"User-Agent": USER_AGENT}
         try:
+            print(f"Geocoding ({lat}, {lon})")
             resp = requests.get(url, params=params, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()

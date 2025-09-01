@@ -15,9 +15,10 @@ from db.db import Location, LocationDB
 import time
 from datetime import datetime, date
 
-from geocode.geocode import PlaceInfo
+from geocode.geocode import Geocoder, PlaceInfo
 
 DB = LocationDB()
+GEOCODER = Geocoder()
 
 def _date_to_ts(d: str) -> int:
     # Converts YYYY-MM-DD to local midnight timestamp
@@ -32,14 +33,7 @@ def _local_time(ts: int) -> str:
 def _haversine_miles(loc1: Location, loc2: Location) -> float:
     return haversine(loc1["lat"], loc1["lon"], loc2["lat"], loc2["lon"]) * 0.000621371
 
-class Travel(NamedTuple):
-    person: str
-    start_point: Point
-    end_point: Point
-    start_ts: int
-    end_ts: int
-    start_place: PlaceInfo
-    end_place: PlaceInfo
+
 
 
 def _is_moving(start: Location, end: Location) -> bool:
@@ -131,6 +125,23 @@ def _find_all_travel_locations(locations: List[Location]) -> List[Tuple[Location
         segment = _find_first_travel_locations(locations[locations.index(segment[1]) + 1:])
     return travel_segments
 
+class Travel(NamedTuple):
+    start_point: Point
+    start_ts: int
+    end_point: Point
+    end_ts: int
+    start_place: PlaceInfo
+    end_place: PlaceInfo
+
+def _map_to_travel(start: Location, end: Location) -> Travel:
+    return Travel(
+        start_point = Point(start["lat"], start["lon"]),
+        end_point = Point(end["lat"], end["lon"]),
+        start_ts = start["timestamp_from"],
+        end_ts = end["timestamp_from"],
+        start_place = GEOCODER.get_place_info(start["lat"], start["lon"]),
+        end_place = GEOCODER.get_place_info(end["lat"], end["lon"])
+    )
 
 def detect_travel(person: str, start_date: str = None, end_date: str = None) -> List[Travel]:
     """
@@ -149,10 +160,4 @@ def detect_travel(person: str, start_date: str = None, end_date: str = None) -> 
     locations = DB.get_locations_in_range(person, start_ts, end_ts)
 
     travel_segments = _find_all_travel_locations(locations)
-    for segment in travel_segments:
-        distance = _haversine_miles(segment[0], segment[1])
-        time_hours = (segment[1]['timestamp_from'] - segment[0]['timestamp_from']) / 60.0 / 60.0
-        speed = distance / time_hours
-        start_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(segment[0]['timestamp_from']))
-        end_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(segment[1]['timestamp_from']))
-        print(f"Start: {start_time}, End: {end_time}, Distance: {distance:.1f} miles, Hours: {time_hours:.1f}, Speed: {speed:.1f} mph")
+    return [_map_to_travel(start, end) for start, end in travel_segments]
