@@ -48,8 +48,12 @@ def location_generator(
     for ts in timestamps:
         # Advance to the next interval if the current one is before ts
         while current and not (ts < current["timestamp_to"]):
+            # Assert we need to advance to get the next interval
             assert current["timestamp_to"] <= ts
-            current = next(interval_iter, None)
+            next_interval = next(interval_iter, None)
+            # Assert the next interval is actually sorted after the previous
+            assert next_interval is None or next_interval["timestamp_from"] >= current["timestamp_to"]
+            current = next_interval
         if current:
             yield Point(current["lat"], current["lon"])
         else:
