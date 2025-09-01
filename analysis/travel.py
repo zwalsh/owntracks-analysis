@@ -8,9 +8,13 @@ MOVEMENT_MIN_DIST_MILES = 0.05
 STATIONARY_RADIUS_MILES = 0.10
 
 
+from typing import List, NamedTuple
+from analysis.places import Point
 from db.db import LocationDB
 import time
 from datetime import datetime, date
+
+from geocode.geocode import PlaceInfo
 
 DB = LocationDB()
 
@@ -18,7 +22,19 @@ def _date_to_ts(d: str) -> int:
     # Converts YYYY-MM-DD to local midnight timestamp
     return int(time.mktime(datetime.strptime(d, "%Y-%m-%d").timetuple()))
 
-def detect_travel(person: str, start_date: str = None, end_date: str = None):
+class Travel(NamedTuple):
+    person: str
+    start_point: Point
+    end_point: Point
+    start_ts: int
+    end_ts: int
+    start_place: PlaceInfo
+    end_place: PlaceInfo
+
+def detect_travel(person: str, start_date: str = None, end_date: str = None) -> List[Travel]:
+    """
+    Detects travel episodes for a given person within the specified date range.
+    """
     # Default dates: start of current year to today
     today = date.today()
     year_start = date(today.year, 1, 1)
