@@ -40,7 +40,7 @@ def run_import():
                         if i + 1 < len(entries_sorted):
                             timestamp_to = entries_sorted[i + 1].get("tst")
                         else:
-                            continue # Just discard the last entry in each file, it's for the best - no other easy way to know what the timestamp_to time is.
+                            continue  # Just discard the last entry in each file, it's for the best - no other easy way to know what the timestamp_to time is.
 
                         timestamp = entry.get("tst")
                         lat = entry.get("lat")

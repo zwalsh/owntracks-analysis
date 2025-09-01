@@ -30,15 +30,15 @@ This project analyzes location history exported from Owntracks, using Python and
      ```
    - This will create `locations.db` in the project root.
 
-## Analysis
+## Analysis -- Scripts
 
 - Example: Cluster locations by time spent
   ```bash
-  uv run -m analysis.places <person> [year]
+  uv run -m scripts.places <person> [year]
   ```
   - Replace `<person>` with the name used in your Owntracks export.
 
-- Other analysis scripts are in the `analysis/` directory. See their docstrings for usage.
+- Other scripts are in the `scripts/` directory. See their docstrings for usage.
 
 ## Geocoding
 - Reverse geocoding is cached in `geocode_cache.json`.

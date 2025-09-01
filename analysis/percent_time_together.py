@@ -1,4 +1,3 @@
-
 import logging
 import sys
 from typing import Dict
@@ -23,6 +22,7 @@ def get_minutes_in_day(date):
     end = int((dt + timedelta(days=1)).timestamp())
     return [start + 60 * i for i in range((end - start) // 60)]
 
+
 def get_days_in_range(start_date, end_date):
     days = []
     d = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -31,6 +31,7 @@ def get_days_in_range(start_date, end_date):
         days.append(d.strftime("%Y-%m-%d"))
         d += timedelta(days=1)
     return days
+
 
 def percent_minutes_spent_together(start_date=None, end_date=None) -> Dict[str, int]:
     today = date.today()
@@ -49,20 +50,19 @@ def percent_minutes_spent_together(start_date=None, end_date=None) -> Dict[str, 
     all_distances = distance_apart_per_minute(PERSON_A, PERSON_B, start_ts, end_ts)
 
     minutes_per_day = {}
-    minutes_per_day_list = [all_distances[i:i+1440] for i in range(0, len(all_distances), 1440)]
+    minutes_per_day_list = [
+        all_distances[i : i + 1440] for i in range(0, len(all_distances), 1440)
+    ]
     for idx, day in enumerate(days):
-        distances_apart = minutes_per_day_list[idx] if idx < len(minutes_per_day_list) else []
-        minutes = sum(1 for d in distances_apart if d <= METER_THRESHOLD)
-        pct = 100.0 * minutes / 1440 if distances_apart else 0.0
-        bars = int(round(pct / 100 * 20))
-        bar_str = "|" * bars + " " * (20 - bars)
-        logging.info(
-            f"{day}: together {minutes:4}/1440 minutes ({pct:6.2f}%) [{bar_str}]"
+        distances_apart = (
+            minutes_per_day_list[idx] if idx < len(minutes_per_day_list) else []
         )
+        minutes = sum(1 for d in distances_apart if d <= METER_THRESHOLD)
         minutes_per_day[day] = minutes
     return minutes_per_day
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     # Usage: python -m analysis.analysis [start_date] [end_date]
     # Dates in YYYY-MM-DD format
     start_date = None

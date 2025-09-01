@@ -11,6 +11,7 @@ from db.db import Location, LocationDB
 
 DB = LocationDB()
 
+
 # Haversine formula for distance in meters
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371000
@@ -34,7 +35,10 @@ def find_loc(intervals: List[Location], ts: int) -> Optional[Point]:
             return Point(loc["lat"], loc["lon"])
     return None
 
-def location_generator(intervals: List[Location], timestamps: List[int]) -> Generator[Optional[Point], None, None]:
+
+def location_generator(
+    intervals: List[Location], timestamps: List[int]
+) -> Generator[Optional[Point], None, None]:
     """
     Yields the location for each timestamp, advancing the interval generator as needed.
     Assumes intervals are sorted by timestamp_from.
@@ -52,7 +56,9 @@ def location_generator(intervals: List[Location], timestamps: List[int]) -> Gene
             yield None
 
 
-def distance_apart_per_minute(person_a: str, person_b: str, start_ts: int, end_ts: int) -> List[float]:
+def distance_apart_per_minute(
+    person_a: str, person_b: str, start_ts: int, end_ts: int
+) -> List[float]:
     """
     Returns an array of the distance between person_a and person_b in each minute between start_ts and end_ts.
     start_ts and end_ts are epoch seconds.
@@ -68,11 +74,10 @@ def distance_apart_per_minute(person_a: str, person_b: str, start_ts: int, end_t
     a_intervals = location_generator(intervals_a, minutes_in_range)
     b_intervals = location_generator(intervals_b, minutes_in_range)
 
-    for ts, a_point, b_point in zip(minutes_in_range, a_intervals, b_intervals):        
+    for ts, a_point, b_point in zip(minutes_in_range, a_intervals, b_intervals):
         if a_point and b_point:
             dist = haversine(a_point.lat, a_point.lon, b_point.lat, b_point.lon)
             distances.append(dist)
         else:
-            
             distances.append(0.0)
     return distances

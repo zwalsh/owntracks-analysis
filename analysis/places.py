@@ -1,8 +1,7 @@
-from time import localtime, mktime, strptime
-from geocode.geocode import Geocoder
+from time import mktime, strptime
+from geocode.geocode import Geocoder, PlaceInfo
 from typing import List, Tuple, Dict
 from db.db import LocationDB
-import sys
 
 
 class Point:
@@ -48,26 +47,16 @@ def cluster_locations_by_time(person: str, year: str) -> List[Tuple[Point, float
     return result
 
 
-def print_top_locations(person, year):
+def top_locations(
+    person: str, year: int, hour_threshold=24
+) -> List[Tuple[PlaceInfo, float]]:
+    """
+    Returns a list of all places the person spent more than hour_threshold hours at in the given year.
+
+    Geocodes the places, returning a list of tuples containing the point, place name, and time spent.
+    """
     places = cluster_locations_by_time(person, year)
-    print(
-        f"{'Place Name':<30} {'City':<20} {'State':<15} {'Country':<15} {'Time Spent (hours)':>18}"
-    )
-    print("-" * 102)
-    for point, hours in filter(lambda x: x[1] > 24, places):
-        place_info = GEOCODER.get_place_info(point.lat, point.lon)
-        name = (place_info.name or "")[:30]
-        city = (getattr(place_info, "city", "") or "")[:20]
-        state = (getattr(place_info, "state", "") or "")[:15]
-        country = (getattr(place_info, "country", "") or "")[:15]
-        print(f"{name:<30} {city:<20} {state:<15} {country:<15} {hours:>18.2f}")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        person = sys.argv[1]
-        year = sys.argv[2] if len(sys.argv) > 2 else str(localtime().tm_year)
-    else:
-        print("Usage: uv run places.py <person> <year=current year>")
-        sys.exit(1)
-    print_top_locations(person, year)
+    return [
+        (GEOCODER.get_place_info(point.lat, point.lon), hours)
+        for point, hours in filter(lambda x: x[1] > hour_threshold, places)
+    ]
