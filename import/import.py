@@ -18,6 +18,11 @@ def run_import():
     json_files = glob.glob(os.path.join(JSON_DIR, "**", "*.json"), recursive=True)
 
     bulk_locations = []
+    # Counters for logging
+    total_entries = 0
+    skipped_missing = 0
+    skipped_zero = 0
+    skipped_invalid = 0
     for file_path in json_files:
         with open(file_path, "r") as f:
             try:
@@ -40,7 +45,7 @@ def run_import():
                         if i + 1 < len(entries_sorted):
                             timestamp_to = entries_sorted[i + 1].get("tst")
                         else:
-                            continue  # Just discard the last entry in each file, it's for the best - no other easy way to know what the timestamp_to time is.
+                            continue  # discard the last entry because we don't know a following timestamp
 
                         timestamp = entry.get("tst")
                         lat = entry.get("lat")
@@ -48,6 +53,23 @@ def run_import():
                         accuracy = entry.get("acc")
                         battery = entry.get("batt")
                         raw_json = json.dumps(entry)
+
+                        total_entries += 1
+
+                        # Skip malformed/invalid coordinates: missing or zero lat/lon
+                        if lat is None or lon is None:
+                            skipped_missing += 1
+                            continue
+                        try:
+                            # treat exact zero as invalid GPS coordinate in this dataset
+                            if float(lat) == 0.0 or float(lon) == 0.0:
+                                skipped_zero += 1
+                                continue
+                        except Exception:
+                            # if lat/lon cannot be cast to float, skip
+                            skipped_invalid += 1
+                            continue
+
                         bulk_locations.append(
                             Location(
                                 person=person,
@@ -65,6 +87,8 @@ def run_import():
     # Bulk insert all locations at once
     if bulk_locations:
         db.insert_locations_bulk(bulk_locations)
+    # Print summary
+    print(f"Import summary: total_entries={total_entries}, inserted={len(bulk_locations)}, skipped_missing={skipped_missing}, skipped_zero={skipped_zero}, skipped_invalid={skipped_invalid}")
 
 
 if __name__ == "__main__":
