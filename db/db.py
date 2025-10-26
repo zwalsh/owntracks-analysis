@@ -31,19 +31,25 @@ class LocationDB:
             cur.execute("""
                 CREATE TABLE locations (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    person TEXT,
+                    person TEXT NOT NULL,
                     device TEXT,
-                    timestamp_from INTEGER,
-                    timestamp_to INTEGER,
-                    lat REAL,
-                    lon REAL,
+                    timestamp_from INTEGER NOT NULL,
+                    timestamp_to INTEGER NOT NULL,
+                    lat REAL NOT NULL,
+                    lon REAL NOT NULL,
                     accuracy REAL,
                     battery REAL
                 )
             """)
+            # Composite index to speed up queries by person and time interval
             cur.execute("""
                 CREATE INDEX IF NOT EXISTS idx_locations_person_tsfrom_tsto
                 ON locations(person, timestamp_from, timestamp_to)
+            """)
+            # Unique constraint to prevent duplicate inserts for the same person/device/timestamp_from
+            cur.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_locations_unique_person_device_tsfrom
+                ON locations(person, device, timestamp_from)
             """)
             conn.commit()
 

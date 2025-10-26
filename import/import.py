@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+from datetime import datetime
 from db.db import LocationDB, DB_PATH, Location
 
 JSON_DIR = "owntracks-json"
@@ -23,6 +24,10 @@ def run_import():
     skipped_missing = 0
     skipped_zero = 0
     skipped_invalid = 0
+    skipped_dup_same = 0
+    skipped_dup_conflict = 0
+    # track last seen (person, device, timestamp) -> (lat, lon) to dedupe across files
+    last_seen = {}
     for file_path in json_files:
         with open(file_path, "r") as f:
             try:
@@ -69,6 +74,26 @@ def run_import():
                             skipped_invalid += 1
                             continue
 
+                        # Deduplicate by (person, device, timestamp)
+                        key = (person, device, timestamp)
+                        if key in last_seen:
+                            prev_lat, prev_lon = last_seen[key]
+                            try:
+                                same_lat = float(prev_lat) == float(lat)
+                                same_lon = float(prev_lon) == float(lon)
+                            except Exception:
+                                same_lat = False
+                                same_lon = False
+                            if same_lat and same_lon:
+                                skipped_dup_same += 1
+                                continue
+                            else:
+                                skipped_dup_conflict += 1
+                                # skip the conflicting later entry
+                                continue
+                        # record first-seen coords for this key
+                        last_seen[key] = (lat, lon)
+
                         bulk_locations.append(
                             Location(
                                 person=person,
@@ -86,7 +111,9 @@ def run_import():
     if bulk_locations:
         db.insert_locations_bulk(bulk_locations)
     # Print summary
-    print(f"Import summary: total_entries={total_entries}, inserted={len(bulk_locations)}, skipped_missing={skipped_missing}, skipped_zero={skipped_zero}, skipped_invalid={skipped_invalid}")
+    print(
+        f"Import summary: total_entries={total_entries}, inserted={len(bulk_locations)}, skipped_missing={skipped_missing}, skipped_zero={skipped_zero}, skipped_invalid={skipped_invalid}, skipped_dup_same={skipped_dup_same}, skipped_dup_conflict={skipped_dup_conflict}"
+    )
 
 
 if __name__ == "__main__":
