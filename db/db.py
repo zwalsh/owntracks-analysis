@@ -43,6 +43,10 @@ class LocationDB:
                     raw_json TEXT
                 )
             """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_locations_person_tsfrom_tsto
+                ON locations(person, timestamp_from, timestamp_to)
+            """)
             conn.commit()
 
     def insert_location(
