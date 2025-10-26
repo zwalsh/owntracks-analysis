@@ -13,7 +13,6 @@ class Location(TypedDict):
     lon: float
     accuracy: Optional[float]
     battery: Optional[float]
-    raw_json: str
 
 
 class LocationDB:
@@ -39,8 +38,7 @@ class LocationDB:
                     lat REAL,
                     lon REAL,
                     accuracy REAL,
-                    battery REAL,
-                    raw_json TEXT
+                    battery REAL
                 )
             """)
             cur.execute("""
@@ -58,16 +56,15 @@ class LocationDB:
         lon: float,
         accuracy: Optional[float],
         battery: Optional[float],
-        raw_json: str,
     ):
         with self._connect() as conn:
             cur = conn.cursor()
             cur.execute(
                 """
-                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-                (person, device, timestamp, lat, lon, accuracy, battery, raw_json),
+                (person, device, timestamp, lat, lon, accuracy, battery),
             )
             conn.commit()
 
@@ -76,7 +73,7 @@ class LocationDB:
     ) -> List[Location]:
         with self._connect() as conn:
             cur = conn.cursor()
-            query = "SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json FROM locations"
+            query = "SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery FROM locations"
             params = []
             conditions = []
             if person:
@@ -100,8 +97,8 @@ class LocationDB:
             cur = conn.cursor()
             cur.executemany(
                 """
-                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO locations (person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -113,7 +110,6 @@ class LocationDB:
                         loc["lon"],
                         loc["accuracy"],
                         loc["battery"],
-                        loc["raw_json"],
                     )
                     for loc in locations
                 ],
@@ -129,7 +125,7 @@ class LocationDB:
         with self._connect() as conn:
             cur = conn.cursor()
             query = """
-                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json
+                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery
                 FROM locations
                 WHERE person = ? AND timestamp_from <= ? AND timestamp_to > ?
             """
@@ -155,7 +151,7 @@ class LocationDB:
             cur = conn.cursor()
             cur.execute(
                 """
-                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery, raw_json
+                SELECT person, device, timestamp_from, timestamp_to, lat, lon, accuracy, battery
                 FROM locations
                 WHERE person = ? AND timestamp_to > ? AND timestamp_from < ?
                 ORDER BY timestamp_from

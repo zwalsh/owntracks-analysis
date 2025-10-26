@@ -52,7 +52,6 @@ def run_import():
                         lon = entry.get("lon")
                         accuracy = entry.get("acc")
                         battery = entry.get("batt")
-                        raw_json = json.dumps(entry)
 
                         total_entries += 1
 
@@ -80,7 +79,6 @@ def run_import():
                                 lon=lon,
                                 accuracy=accuracy,
                                 battery=battery,
-                                raw_json=raw_json,
                             )
                         )
 
